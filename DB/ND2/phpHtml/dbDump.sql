@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.7.16, for Linux (x86_64)
 --
--- Host: localhost    Database: test_db
+-- Host: localhost    Database: Nd2
 -- ------------------------------------------------------
 -- Server version	5.7.16
 
@@ -61,7 +61,7 @@ CREATE TABLE `Books` (
 
 LOCK TABLES `Books` WRITE;
 /*!40000 ALTER TABLE `Books` DISABLE KEYS */;
-INSERT INTO `Books` VALUES (1,'Programming F# 3.0, 2nd Edition',2012,'Computer science'),(2,'Regular Expressions Cookbook, 2nd Edition',2012,'Computer science'),(3,'Head First Networking',2009,'Computer science'),(4,'The Art of Concurrency',2009,'Computer science'),(5,'97 Things Every Programmer Should Know',2010,'Computer science'),(9,'Mergeliu miskas',2012,'Fiction'),(10,'Receptų knyga',2008,'Kulinarija');
+INSERT INTO `Books` VALUES (1,'Programming F# 3.0, 2nd Edition',2012,'Computer science'),(2,'Regular Expressions Cookbook, 2nd Edition',2012,'Computer science'),(3,'Head First Networking',2009,'Computer science'),(4,'The Art of Concurrency',2009,'Computer science'),(5,'97 Things Every Programmer Should Know',2010,'Computer science'),(9,'Mergeliu miskas',2012,'Fiction');
 /*!40000 ALTER TABLE `Books` ENABLE KEYS */;
 UNLOCK TABLES;
 
