@@ -1,0 +1,51 @@
+3.a) 
+INSERT INTO Authors(name) VALUES ('Jonas Basanavicius');
+3.b) 
+INSERT INTO Books (authorId, title, year) VALUES ( 8, 'Mergeliu miskas', 2012);
+3.c) 
+SELECT title, year, name FROM Books LEFT JOIN Authors ON Books.authorId = Authors.authorId;
+3.d) 
+UPDATE Books SET authorId = 7 WHERE bookId = 9;
+3.e) 
+Su autoriais, kurie neturi knygu:
+SELECT  name, COUNT(Books.bookId) AS bookCount  FROM Authors LEFT JOIN Books ON Books.authorId = Authors.authorId GROUP BY name;
+Tik turintys knygas autoriai:
+SELECT  name, COUNT(Books.bookId) AS bookCount FROM Authors INNER JOIN Books ON Books.authorId = Authors.authorId GROUP BY name;
+3.f)
+DELETE FROM Authors WHERE authorId = 8;
+3.g)
+DELETE FROM Books WHERE authorId is NULL;
+4.a)
+ALTER TABLE Books ADD gendre varchar(255);
+4.b)
+CREATE TABLE IF NOT EXISTS BooksAuthors (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  bookId int(11) NOT NULL,
+  authorId int(11) NOT NULL,
+  PRIMARY KEY (id)
+);
+ALTER TABLE  Books DROP COLUMN authorId;
+4.c)
+UPDATE Books SET gendre = 'Computer science' WHERE bookId = 1;
+UPDATE Books SET gendre = 'Computer science' WHERE bookId = 2;
+UPDATE Books SET gendre = 'Computer science' WHERE bookId = 3;
+UPDATE Books SET gendre = 'Computer science' WHERE bookId = 4;
+UPDATE Books SET gendre = 'Computer science' WHERE bookId = 5;
+UPDATE Books SET gendre = 'Fiction' WHERE bookId = 9;
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (1,1);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (2,2);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (3,4);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (4,6);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (5,7);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (9,7);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (3,5);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (3,3);
+INSERT INTO BooksAuthors(bookId, authorId) VALUES (5,1);
+4.d)
+SELECT title, year, gendre, GROUP_CONCAT(name SEPARATOR ',') AS name  FROM Books LEFT JOIN BooksAuthors ON Books.bookId = BooksAuthors.bookId LEFT JOIN Authors ON BooksAuthors.authorId = Authors.authorId GROUP BY title, year, gendre;
+4.e)
+ALTER TABLE Books MODIFY title VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_lithuanian_ci;
+
+
+
+
