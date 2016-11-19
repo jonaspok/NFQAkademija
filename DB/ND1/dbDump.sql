@@ -61,7 +61,7 @@ CREATE TABLE `Books` (
 
 LOCK TABLES `Books` WRITE;
 /*!40000 ALTER TABLE `Books` DISABLE KEYS */;
-INSERT INTO `Books` VALUES (1,'Programming F# 3.0, 2nd Edition',2012,'Computer science'),(2,'Regular Expressions Cookbook, 2nd Edition',2012,'Computer science'),(3,'Head First Networking',2009,'Computer science'),(4,'The Art of Concurrency',2009,'Computer science'),(5,'97 Things Every Programmer Should Know',2010,'Computer science'),(9,'Mergeliu miskas',2012,'Fiction');
+INSERT INTO `Books` VALUES (1,'Programming F# 3.0, 2nd Edition',2012,'Computer science'),(2,'Regular Expressions Cookbook, 2nd Edition',2012,'Computer science'),(3,'Head First Networking',2009,'Computer science'),(4,'The Art of Concurrency',2009,'Computer science'),(5,'97 Things Every Programmer Should Know',2010,'Computer science'),(9,'Mergeliu miskas',2012,'Fiction'),(10,'Receptų knyga',2008,'Kulinarija');
 /*!40000 ALTER TABLE `Books` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -99,4 +99,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-11-11 20:31:37
+-- Dump completed on 2016-11-11 20:31:36
