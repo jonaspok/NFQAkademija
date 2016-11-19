@@ -45,7 +45,6 @@ INSERT INTO BooksAuthors(bookId, authorId) VALUES (5,1);
 SELECT title, year, gendre, GROUP_CONCAT(name SEPARATOR ',') AS name  FROM Books LEFT JOIN BooksAuthors ON Books.bookId = BooksAuthors.bookId LEFT JOIN Authors ON BooksAuthors.authorId = Authors.authorId GROUP BY title, year, gendre;
 4.e)
 ALTER TABLE Books MODIFY title VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_lithuanian_ci;
-INSERT INTO Books (title, year, gendre) VALUES ('Receptų knyga', 2008, 'Kulinarija');
 
 
 

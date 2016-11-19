@@ -27,4 +27,3 @@ INSERT INTO BooksAuthors(bookId, authorId) VALUES (3,5);
 INSERT INTO BooksAuthors(bookId, authorId) VALUES (3,3);
 INSERT INTO BooksAuthors(bookId, authorId) VALUES (5,1);
 ALTER TABLE Books MODIFY title VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_lithuanian_ci;
-INSERT INTO Books (title, year, gendre) VALUES ('Receptų knyga', 2008, 'Kulinarija');
