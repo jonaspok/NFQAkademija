@@ -9,9 +9,10 @@ include "BookRepository.php";
   <ul>
   <?php
    $bookrep = new BookRepository("localhost","root", "root", "Nd2");
-   $books = $bookrep->getAllBooks();
-   foreach($books as $b)
+
+   while($bookrep->hasNextBook())
    {
+    $b = $bookrep->getNextBook();
     $id = $b->getBookId();
     echo '<li>' . '<a href = "book_details.php?id=' . $id .'">' . $b->getTitle() . '</a>' . '</li>';
    }

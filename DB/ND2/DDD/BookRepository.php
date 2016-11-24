@@ -14,12 +14,17 @@ class BookRepository
     private $psw;
     private $dbName;
 
+    private $bookList;
+    private $currentBook;
+
     public function __construct($hostName, $userName, $psw, $dbName)
     {
         $this->hostName = $hostName;
         $this->userName = $userName;
         $this->psw = $psw;
         $this->dbName = $dbName;
+        $this->currentBook = 0;
+        $this->getAllBooks();
     }
 
     public function getBookById($id)
@@ -42,7 +47,7 @@ class BookRepository
          $db = mysqli_connect($this->hostName, $this->userName, $this->psw, $this->dbName) or die('Error connecting to MySQL server.');
          $query = "SELECT * FROM Books";
          $result = mysqli_query($db, $query) or die('Error querying database.');
-         $books = array();
+         $this->bookList = array();
          while($row = mysqli_fetch_array($result))
          {
              $book = new Book();
@@ -50,10 +55,10 @@ class BookRepository
              $book->setYear($row['year']);
              $book->setTitle($row['title']);
              $book->setGendre($row['gendre']);
-             $books[] = $book;
+             $this->bookList[] = $book;
          }
          mysqli_close($db);
-         return $books;
+//         return $books;
      }
 
      public function getAuthorsByBookId($bookId)
@@ -71,4 +76,20 @@ class BookRepository
          mysqli_close($db);
          return $authors;
      }
+
+    public function hasNextBook()
+    {
+        if (count($this->bookList) > $this->currentBook)
+            return TRUE;
+         else
+            return FALSE;
+
+    }
+    public function getNextBook()
+    {
+        if ($this->hasNextBook())
+            return $this->bookList[($this->currentBook++)];
+        else
+            return NULL;
+    }
 }
