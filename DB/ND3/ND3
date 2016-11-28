@@ -1,0 +1,242 @@
+1.1. Techniko (id = 130) atliktų darbų paslaugų kiekis pagal paslaugos pavadinimą, 2008-12 mėn.:
+
+SELECT SQL_NO_CACHE 
+        jr.kkTechnicianId
+       ,s.name
+       ,COUNT(s.serviceId) AS quantity
+FROM JobsRegister jr 
+JOIN JobsRegister_Services jr_s ON jr.jobsRegisterId = jr_s.jobsRegisterId 
+JOIN Services s ON s.serviceId = jr_s.serviceId
+WHERE 
+      jr.kkTechnicianId = 130 
+      AND jr.arrivalDate BETWEEN '2008-12-01' AND '2008-12-31'
+GROUP BY
+       jr.kkTechnicianId
+       ,YEAR(jr.arrivalDate)
+       ,MONTH(jr.arrivalDate) 
+       ,s.name
+ORDER BY
+        s.name ASC;
+
++----+-------------+-------+------------+--------+---------------+---------+---------+-------------------------+--------+----------+---------------------------------+
+| id | select_type | table | partitions | type   | possible_keys | key     | key_len | ref                     | rows   | filtered | Extra                           |
++----+-------------+-------+------------+--------+---------------+---------+---------+-------------------------+--------+----------+---------------------------------+
+|  1 | SIMPLE      | jr_s  | NULL       | ALL    | NULL          | NULL    | NULL    | NULL                    | 607005 |   100.00 | Using temporary; Using filesort |
+|  1 | SIMPLE      | s     | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_s.serviceId      |      1 |   100.00 | NULL                            |
+|  1 | SIMPLE      | jr    | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_s.jobsRegisterId |      1 |     5.00 | Using where                     |
++----+-------------+-------+------------+--------+---------------+---------+---------+-------------------------+--------+----------+---------------------------------+
+
+ALTER TABLE JobsRegister ADD INDEX indx_arrivalDate(arrivalDate);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_jobsRegisterId(jobsRegisterId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_serviceId(serviceId);
+
++----+-------------+-------+------------+--------+------------------------------------+---------------------+---------+-----------------------+------+----------+---------------------------------------------------------------------+
+| id | select_type | table | partitions | type   | possible_keys                      | key                 | key_len | ref                   | rows | filtered | Extra                                                               |
++----+-------------+-------+------------+--------+------------------------------------+---------------------+---------+-----------------------+------+----------+---------------------------------------------------------------------+
+|  1 | SIMPLE      | jr    | NULL       | range  | PRIMARY,indx_arrivalDate           | indx_arrivalDate    | 4       | NULL                  | 5142 |    10.00 | Using index condition; Using where; Using temporary; Using filesort |
+|  1 | SIMPLE      | jr_s  | NULL       | ref    | indx_jobsRegisterId,indx_serviceId | indx_jobsRegisterId | 4       | Nd3.jr.jobsRegisterId |    1 |   100.00 | Using index condition                                               |
+|  1 | SIMPLE      | s     | NULL       | eq_ref | PRIMARY                            | PRIMARY             | 4       | Nd3.jr_s.serviceId    |    1 |   100.00 | NULL                                                                |
++----+-------------+-------+------------+--------+------------------------------------+---------------------+---------+-----------------------+------+----------+---------------------------------------------------------------------+
+
++----------------+------------------------------------------+----------+
+| kkTechnicianId | name                                     | quantity |
++----------------+------------------------------------------+----------+
+|            130 | 2. Deratizacija, Inspekcija/Monitoringas |       52 |
+|            130 | 3. Dezinsekcija, Inspekcija/Monitorigas  |       11 |
+|            130 | 5. Inspekcija/Monitoringas               |       72 |
++----------------+------------------------------------------+----------+
+Prieš indeksavimą: (1,35 sec)
+Po indeksavimo: (0,02 sec)
+
+1.2. Panaudotų medžiagų kiekiai įmonės darbuose, 2008-12 mėn.:
+
+SELECT SQL_NO_CACHE 
+       m.name
+       ,m.unit
+       ,SUM(jr_m.count) AS quantity
+FROM JobsRegister jr 
+JOIN JobsRegister_Materials jr_m ON jr.jobsRegisterId = jr_m.jobsRegisterId 
+JOIN Materials m ON m.materialId = jr_m.materialId
+WHERE 
+       jr.arrivalDate BETWEEN '2008-12-01' AND '2008-12-31'
+GROUP BY
+        m.name
+       ,YEAR(jr.arrivalDate)
+       ,MONTH(jr.arrivalDate)
+       ,m.unit
+ORDER BY
+        m.name ASC;
+
++----+-------------+-------+------------+--------+---------------+---------+---------+-------------------------+--------+----------+---------------------------------+
+| id | select_type | table | partitions | type   | possible_keys | key     | key_len | ref                     | rows   | filtered | Extra                           |
++----+-------------+-------+------------+--------+---------------+---------+---------+-------------------------+--------+----------+---------------------------------+
+|  1 | SIMPLE      | jr_m  | NULL       | ALL    | NULL          | NULL    | NULL    | NULL                    | 610257 |   100.00 | Using temporary; Using filesort |
+|  1 | SIMPLE      | m     | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_m.materialId     |      1 |   100.00 | Using where                     |
+|  1 | SIMPLE      | jr    | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_m.jobsRegisterId |      1 |    11.11 | Using where                     |
++----+-------------+-------+------------+--------+---------------+---------+---------+-------------------------+--------+----------+---------------------------------+
+
+ALTER TABLE JobsRegister ADD INDEX indx_arrivalDate(arrivalDate);
+ALTER TABLE JobsRegister_Materials ADD INDEX indx_jobsRegisterId(jobsRegisterId);
+ALTER TABLE JobsRegister_Materials ADD INDEX indx_materialId(materialId);
+
++----+-------------+-------+------------+--------+-------------------------------------+---------------------+---------+-----------------------+------+----------+-----------------------------------------------------------+
+| id | select_type | table | partitions | type   | possible_keys                       | key                 | key_len | ref                   | rows | filtered | Extra                                                     |
++----+-------------+-------+------------+--------+-------------------------------------+---------------------+---------+-----------------------+------+----------+-----------------------------------------------------------+
+|  1 | SIMPLE      | jr    | NULL       | range  | PRIMARY,indx_arrivalDate            | indx_arrivalDate    | 4       | NULL                  | 5142 |   100.00 | Using where; Using index; Using temporary; Using filesort |
+|  1 | SIMPLE      | jr_m  | NULL       | ref    | indx_jobsRegisterId,indx_materialId | indx_jobsRegisterId | 4       | Nd3.jr.jobsRegisterId |    1 |   100.00 | Using index condition                                     |
+|  1 | SIMPLE      | m     | NULL       | eq_ref | PRIMARY                             | PRIMARY             | 4       | Nd3.jr_m.materialId   |    1 |   100.00 | Using where                                               |
++----+-------------+-------+------------+--------+-------------------------------------+---------------------+---------+-----------------------+------+----------+-----------------------------------------------------------+
+
+
++------------------------------------------------------+------+----------+
+| name                                                 | unit | quantity |
++------------------------------------------------------+------+----------+
+| Actellic 50 EC                                       | ltr  |    8.600 |
+| Amplat                                               | ltr  |   10.620 |
+| Automatinis purškiklis orui gaivinti "Airwick"       | vnt  |   30.000 |
+| Bromad G                                             | kg   |  425.385 |
+| Diporex                                              | kg   |    1.020 |
+| Facorat parafininiai blokeliai                       | kg   |  113.760 |
+| Facorat pasta                                        | kg   |  365.970 |
+| Klijai Top Gum                                       | vnt  |  253.000 |
+| Kulkelės 4.5 mm                                      | vnt  |  930.000 |
+| Lemodor                                              | kg   |    0.200 |
+| Lentelė lipni pelėms Sitno (kartoninės)              | vnt  | 2882.400 |
+| Lipdukas kandims Sitno                               | vnt  |   30.000 |
+| Lipdukas tarakonams Sitno                            | vnt  | 1562.000 |
+| Metradin flow                                        | ltr  |   14.750 |
+| Musgaudis langinukas Sitno                           | vnt  |   78.000 |
+| Musgaudis ritinėlis Bros                             | vnt  |   12.000 |
+| Oro gaiviklis Time Mist                              | vnt  |   25.000 |
+| Permaplus L                                          | kg   |   27.250 |
+| Propilenglikolis USP                                 | kg   |   31.000 |
+| Pulnex                                               | kg   |    9.100 |
+| Rodexion pasta                                       | kg   |   69.180 |
+| Rodimur pasta                                        | kg   |  264.170 |
+| Rodimur Polvere                                      | kg   |    8.700 |
+| Rotryn 50                                            | ltr  |   18.060 |
+| Spąstai pelėms gyvagaudžiai Repeater (metaliniai)    | vnt  |    2.000 |
+| Tornado G                                            | kg   |   84.910 |
+| Tūba (FTP-40) 20W, NDŽ                               | vnt  |    4.000 |
+| Tūba (Luralite) 18W, DŽ                              | vnt  |    5.000 |
+| Vylių dėžutė Beta                                    | vnt  |   74.000 |
+| Vylių dėžutė kartoninė pelėms                        | vnt  |   81.000 |
+| Vylių dėžutė pelėms Peti                             | vnt  |   30.000 |
+| Vylių dėžutė Strongbox                               | vnt  |    5.000 |
+| Vylius faraoninėms skruzdėlėms Protect               | vnt  |   18.000 |
++------------------------------------------------------+------+----------+
+Prieš indeksavimą: (1,66 sec)
+Po indeksavimo: (0,11 sec)
+
+1.3. Įmonės pajamos pagal darbų paslaugų pavadinimą 2008-12 mėn.:
+
+SELECT SQL_NO_CACHE
+       s.name
+       ,SUM(m.price * jr_m.count) AS income
+FROM JobsRegister jr 
+JOIN JobsRegister_Services jr_s ON jr.jobsRegisterId = jr_s.jobsRegisterId 
+JOIN JobsRegister_Materials jr_m ON jr_s.jobsRegisterServiceId = jr_m.jobsRegisterServiceId
+JOIN Materials m ON m.materialId = jr_m.materialId 
+LEFT JOIN Services s ON s.serviceId = jr_s.serviceId
+WHERE 
+        jr.arrivalDate BETWEEN '2008-12-01' AND '2008-12-31'
+GROUP BY
+       s.name
+       ,YEAR(jr.arrivalDate)
+       ,MONTH(jr.arrivalDate) 
+ORDER BY
+        s.name ASC;
+
++----+-------------+-------+------------+--------+---------------+---------+---------+--------------------------------+--------+----------+---------------------------------+
+| id | select_type | table | partitions | type   | possible_keys | key     | key_len | ref                            | rows   | filtered | Extra                           |
++----+-------------+-------+------------+--------+---------------+---------+---------+--------------------------------+--------+----------+---------------------------------+
+|  1 | SIMPLE      | jr_m  | NULL       | ALL    | NULL          | NULL    | NULL    | NULL                           | 610257 |   100.00 | Using temporary; Using filesort |
+|  1 | SIMPLE      | jr_s  | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_m.jobsRegisterServiceId |      1 |   100.00 | NULL                            |
+|  1 | SIMPLE      | s     | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_s.serviceId             |      1 |   100.00 | NULL                            |
+|  1 | SIMPLE      | jr    | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_s.jobsRegisterId        |      1 |    11.11 | Using where                     |
+|  1 | SIMPLE      | m     | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | Nd3.jr_m.materialId            |      1 |   100.00 | Using where                     |
++----+-------------+-------+------------+--------+---------------+---------+---------+--------------------------------+--------+----------+---------------------------------+
+
+
+ALTER TABLE JobsRegister ADD INDEX indx_arrivalDate(arrivalDate);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_jobsRegisterId(jobsRegisterId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_serviceId(serviceId);
+ALTER TABLE JobsRegister_Materials ADD INDEX indx_jobsRegisterServiceId(jobsRegisterServiceId);
+ALTER TABLE JobsRegister_Materials ADD INDEX indx_materialId(materialId);
+
++----+-------------+-------+------------+--------+--------------------------------------------+----------------------------+---------+--------------------------------+------+----------+-----------------------------------------------------------+
+| id | select_type | table | partitions | type   | possible_keys                              | key                        | key_len | ref                            | rows | filtered | Extra                                                     |
++----+-------------+-------+------------+--------+--------------------------------------------+----------------------------+---------+--------------------------------+------+----------+-----------------------------------------------------------+
+|  1 | SIMPLE      | jr    | NULL       | range  | PRIMARY,indx_arrivalDate                   | indx_arrivalDate           | 4       | NULL                           | 5142 |   100.00 | Using where; Using index; Using temporary; Using filesort |
+|  1 | SIMPLE      | jr_s  | NULL       | ref    | PRIMARY,indx_jobsRegisterId                | indx_jobsRegisterId        | 4       | Nd3.jr.jobsRegisterId          |    1 |   100.00 | Using index condition                                     |
+|  1 | SIMPLE      | s     | NULL       | eq_ref | PRIMARY                                    | PRIMARY                    | 4       | Nd3.jr_s.serviceId             |    1 |   100.00 | NULL                                                      |
+|  1 | SIMPLE      | jr_m  | NULL       | ref    | indx_jobsRegisterServiceId,indx_materialId | indx_jobsRegisterServiceId | 4       | Nd3.jr_s.jobsRegisterServiceId |    1 |   100.00 | NULL                                                      |
+|  1 | SIMPLE      | m     | NULL       | eq_ref | PRIMARY                                    | PRIMARY                    | 4       | Nd3.jr_m.materialId            |    1 |   100.00 | Using where                                               |
++----+-------------+-------+------------+--------+--------------------------------------------+----------------------------+---------+--------------------------------+------+----------+-----------------------------------------------------------+
+
++----------------------------------------------------------------------------+-------------+
+| name                                                                       | income      |
++----------------------------------------------------------------------------+-------------+
+| 2. Deratizacija, Inspekcija/Monitoringas                                   | 32204.35455 |
+| 3. Dezinsekcija, Inspekcija/Monitorigas                                    | 11440.95420 |
+| 4. Dezinfekcija, Inpskecija/Monitoringas                                   |   304.59400 |
+| 5. Inspekcija/Monitoringas                                                 |  4874.91400 |
+| Dalinė dezinsekcija (nesugeriančių paviršių padengimas insekticidais)      |    22.74800 |
+| Dezinsekcija (grūdiniai kenkėjai)                                          |  2133.47200 |
+| Oro gaivinimas                                                             |   557.29000 |
+| Paukščių kontrolė                                                          |   247.92000 |
++----------------------------------------------------------------------------+-------------+
+
+Prieš indeksavimą:  (2,74 sec)
+Po indeksavimo: (0,14 sec)
+
+ALTER TABLE JobsRegister DROP INDEX indx_arrivalDate;
+ALTER TABLE JobsRegister_Services DROP INDEX indx_jobsRegisterId;
+ALTER TABLE JobsRegister_Services DROP INDEX indx_serviceId;
+ALTER TABLE JobsRegister_Materials DROP INDEX indx_jobsRegisterServiceId;
+ALTER TABLE JobsRegister_Materials DROP INDEX indx_materialId;
+
+2. DELETE'ai
+
+2.1. 
+
+DELETE FROM JobsRegister_Materials 
+WHERE jobsRegisterServiceId > 300000
+AND jobsRegisterServiceId <= 301000;
+
++----+-------------+------------------------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+| id | select_type | table                  | partitions | type | possible_keys | key  | key_len | ref  | rows   | filtered | Extra       |
++----+-------------+------------------------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+|  1 | DELETE      | JobsRegister_Materials | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 610257 |   100.00 | Using where |
++----+-------------+------------------------+------------+------+---------------+------+---------+------+--------+----------+-------------+
+Query OK, 1392 rows affected (0,48 sec)
+
+ALTER TABLE JobsRegister_Materials ADD INDEX indx_jobsRegisterServiceId(jobsRegisterServiceId);
+
++----+-------------+------------------------+------------+-------+----------------------------+----------------------------+---------+-------+------+----------+-------------+
+| id | select_type | table                  | partitions | type  | possible_keys              | key                        | key_len | ref   | rows | filtered | Extra       |
++----+-------------+------------------------+------------+-------+----------------------------+----------------------------+---------+-------+------+----------+-------------+
+|  1 | DELETE      | JobsRegister_Materials | NULL       | range | indx_jobsRegisterServiceId | indx_jobsRegisterServiceId | 4       | const | 1392 |   100.00 | Using where |
++----+-------------+------------------------+------------+-------+----------------------------+----------------------------+---------+-------+------+----------+-------------+
+Query OK, 1392 rows affected (0,07 sec)
+
+2.2. 
+DELETE FROM Services WHERE name = 'Siurblio nuoma';
++----+-------------+----------+------------+------+---------------+------+---------+------+------+----------+-------------+
+| id | select_type | table    | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
++----+-------------+----------+------------+------+---------------+------+---------+------+------+----------+-------------+
+|  1 | DELETE      | Services | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   24 |   100.00 | Using where |
++----+-------------+----------+------------+------+---------------+------+---------+------+------+----------+-------------+
+Query OK, 1 row affected (0,06 sec)
+
+ALTER TABLE Services ADD INDEX indx_name(name);
+
++----+-------------+----------+------------+-------+---------------+-----------+---------+-------+------+----------+-------------+
+| id | select_type | table    | partitions | type  | possible_keys | key       | key_len | ref   | rows | filtered | Extra       |
++----+-------------+----------+------------+-------+---------------+-----------+---------+-------+------+----------+-------------+
+|  1 | DELETE      | Services | NULL       | range | indx_name     | indx_name | 767     | const |    1 |   100.00 | Using where |
++----+-------------+----------+------------+-------+---------------+-----------+---------+-------+------+----------+-------------+
+Query OK, 1 row affected (0,04 sec)
+
+
+
