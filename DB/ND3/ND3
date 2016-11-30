@@ -190,15 +190,9 @@ ALTER TABLE JobsRegister_Materials ADD INDEX indx_materialId(materialId);
 Prieš indeksavimą:  (2,74 sec)
 Po indeksavimo: (0,14 sec)
 
-ALTER TABLE JobsRegister DROP INDEX indx_arrivalDate;
-ALTER TABLE JobsRegister_Services DROP INDEX indx_jobsRegisterId;
-ALTER TABLE JobsRegister_Services DROP INDEX indx_serviceId;
-ALTER TABLE JobsRegister_Materials DROP INDEX indx_jobsRegisterServiceId;
-ALTER TABLE JobsRegister_Materials DROP INDEX indx_materialId;
-
 2. DELETE'ai
 
-2.1. 
+2.1. Ištrinti 1000 pasirinktų įrašų iš JobsRegister_Materials lentos:
 
 DELETE FROM JobsRegister_Materials 
 WHERE jobsRegisterServiceId > 300000
@@ -220,7 +214,8 @@ ALTER TABLE JobsRegister_Materials ADD INDEX indx_jobsRegisterServiceId(jobsRegi
 +----+-------------+------------------------+------------+-------+----------------------------+----------------------------+---------+-------+------+----------+-------------+
 Query OK, 1392 rows affected (0,07 sec)
 
-2.2. 
+2.2. Ištrinti "Sriublio nuoma" paslaugą iš Services lentos:
+
 DELETE FROM Services WHERE name = 'Siurblio nuoma';
 +----+-------------+----------+------------+------+---------------+------+---------+------+------+----------+-------------+
 | id | select_type | table    | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
@@ -237,6 +232,222 @@ ALTER TABLE Services ADD INDEX indx_name(name);
 |  1 | DELETE      | Services | NULL       | range | indx_name     | indx_name | 767     | const |    1 |   100.00 | Using where |
 +----+-------------+----------+------------+-------+---------------+-----------+---------+-------+------+----------+-------------+
 Query OK, 1 row affected (0,04 sec)
+
+3. UPDATE'ai
+
+3.1. Pakeisti darbo registracijos tipą iš 'primary' į 'secondary':
+
+UPDATE JobsRegister
+SET goal = 'secondary' 
+WHERE goal = 'primary';
+
++----+-------------+--------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+| id | select_type | table        | partitions | type  | possible_keys | key     | key_len | ref  | rows   | filtered | Extra       |
++----+-------------+--------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+|  1 | UPDATE      | JobsRegister | NULL       | index | NULL          | PRIMARY | 4       | NULL | 518339 |   100.00 | Using where |
++----+-------------+--------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+
+
+Query OK, 50 rows affected (0,38 sec)
+Rows matched: 50  Changed: 50  Warnings: 0
+
+
+ALTER TABLE JobsRegister ADD INDEX indx_goal(goal);
+
++----+-------------+--------------+------------+-------+---------------+-----------+---------+-------+------+----------+------------------------------+
+| id | select_type | table        | partitions | type  | possible_keys | key       | key_len | ref   | rows | filtered | Extra                        |
++----+-------------+--------------+------------+-------+---------------+-----------+---------+-------+------+----------+------------------------------+
+|  1 | UPDATE      | JobsRegister | NULL       | range | indx_goal     | indx_goal | 2       | const |   50 |   100.00 | Using where; Using temporary |
++----+-------------+--------------+------------+-------+---------------+-----------+---------+-------+------+----------+------------------------------+
+Query OK, 50 rows affected (0,05 sec)
+Rows matched: 50  Changed: 50  Warnings: 0
+
+3.2. Pakeisti visų darbų medžiagų kiekius, kur buvo 1 į 2:
+
+UPDATE JobsRegister_Materials
+SET count = 2 
+WHERE count = 1;
+
++----+-------------+------------------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+| id | select_type | table                  | partitions | type  | possible_keys | key     | key_len | ref  | rows   | filtered | Extra       |
++----+-------------+------------------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+|  1 | UPDATE      | JobsRegister_Materials | NULL       | index | NULL          | PRIMARY | 4       | NULL | 610257 |   100.00 | Using where |
++----+-------------+------------------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+
+Query OK, 118506 rows affected (1,62 sec)
+Rows matched: 118506  Changed: 118506  Warnings: 0
+
+ALTER TABLE JobsRegister_Materials ADD INDEX indx_count(count);
+
++----+-------------+------------------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+| id | select_type | table                  | partitions | type  | possible_keys | key     | key_len | ref  | rows   | filtered | Extra       |
++----+-------------+------------------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+|  1 | UPDATE      | JobsRegister_Materials | NULL       | index | indx_count    | PRIMARY | 4       | NULL | 610257 |   100.00 | Using where |
++----+-------------+------------------------+------------+-------+---------------+---------+---------+------+--------+----------+-------------+
+
+Query OK, 118506 rows affected (3,57 sec)
+Rows matched: 118506  Changed: 118506  Warnings: 0
+
+4. INSERT'ai
+
+4.1. 1000 įrašų įterpimas po vieną į 'JobsRegister_Services' lentą:
+
+Stored procedure 'insert_1000_1':
+
+DROP PROCEDURE IF EXISTS insert_1000_1;
+DELIMITER //
+CREATE PROCEDURE insert_1000_1()
+BEGIN
+ DECLARE i INT;
+ SET i = 0;
+ label1: LOOP
+  SET i = i + 1;
+  INSERT INTO JobsRegister_Services(jobsRegisterId, serviceId, goal) VALUES (i,i,'primary');
+  IF i < 1000 THEN
+   ITERATE label1;
+  END IF;
+  LEAVE label1;
+ END LOOP label1;
+
+END//
+DELIMITER ;
+
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| Field                 | Type                                | Null | Key | Default | Extra          |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| jobsRegisterServiceId | int(11) unsigned                    | NO   | PRI | NULL    | auto_increment |
+| jobsRegisterId        | int(11) unsigned                    | NO   |     | 0       |                |
+| serviceId             | int(11) unsigned                    | NO   |     | 0       |                |
+| goal                  | enum('primary','secondary','order') | YES  |     | NULL    |                |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+
+call insert_1000_1();
+Vykdymo laikas: (37,03 sec)
+
+ALTER TABLE JobsRegister_Services ADD INDEX indx_jobsRegisterId(jobsRegisterId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_serviceId(serviceId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_goal(goal);
+
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| Field                 | Type                                | Null | Key | Default | Extra          |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| jobsRegisterServiceId | int(11) unsigned                    | NO   | PRI | NULL    | auto_increment |
+| jobsRegisterId        | int(11) unsigned                    | NO   | MUL | 0       |                |
+| serviceId             | int(11) unsigned                    | NO   | MUL | 0       |                |
+| goal                  | enum('primary','secondary','order') | YES  | MUL | NULL    |                |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+
+call insert_1000_1();
+Vykdymo laikas: (37,01 sec)
+
+4.2. 1000 įrašų įterpimas vienu metu į 'JobsRegister_Services' lentą:
+
+Atskiros lentos paruošimas:
+
+CREATE TABLE IF NOT EXISTS jobs_services_1000 AS 
+  SELECT * FROM JobsRegister_Services LIMIT 1000;
+ALTER TABLE jobs_services_1000 DROP jobsRegisterServiceId;
+
+Insertinimas:
+
+INSERT INTO JobsRegister_Services SELECT 0, jobs_services_1000.* FROM jobs_services_1000; 
+
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| Field                 | Type                                | Null | Key | Default | Extra          |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| jobsRegisterServiceId | int(11) unsigned                    | NO   | PRI | NULL    | auto_increment |
+| jobsRegisterId        | int(11) unsigned                    | NO   |     | 0       |                |
+| serviceId             | int(11) unsigned                    | NO   |     | 0       |                |
+| goal                  | enum('primary','secondary','order') | YES  |     | NULL    |                |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+
++----+-------------+-----------------------+------------+------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table                 | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+-----------------------+------------+------+---------------+------+---------+------+------+----------+-------+
+|  1 | INSERT      | JobsRegister_Services | NULL       | ALL  | NULL          | NULL | NULL    | NULL | NULL |     NULL | NULL  |
+|  1 | SIMPLE      | jobs_services_1000    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1324 |   100.00 | NULL  |
++----+-------------+-----------------------+------------+------+---------------+------+---------+------+------+----------+-------+
+
+Query OK, 1000 rows affected (0,07 sec)
+
+ALTER TABLE JobsRegister_Services ADD INDEX indx_jobsRegisterId(jobsRegisterId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_serviceId(serviceId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_goal(goal);
+
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| Field                 | Type                                | Null | Key | Default | Extra          |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| jobsRegisterServiceId | int(11) unsigned                    | NO   | PRI | NULL    | auto_increment |
+| jobsRegisterId        | int(11) unsigned                    | NO   | MUL | 0       |                |
+| serviceId             | int(11) unsigned                    | NO   | MUL | 0       |                |
+| goal                  | enum('primary','secondary','order') | YES  | MUL | NULL    |                |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+
++----+-------------+-----------------------+------------+------+---------------+------+---------+------+------+----------+-------+
+| id | select_type | table                 | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
++----+-------------+-----------------------+------------+------+---------------+------+---------+------+------+----------+-------+
+|  1 | INSERT      | JobsRegister_Services | NULL       | ALL  | NULL          | NULL | NULL    | NULL | NULL |     NULL | NULL  |
+|  1 | SIMPLE      | jobs_services_1000    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 1324 |   100.00 | NULL  |
++----+-------------+-----------------------+------------+------+---------------+------+---------+------+------+----------+-------+
+
+Query OK, 1000 rows affected (0,08 sec)
+
+4.3. 1000 įrašų užloudinimas iš csv failo į 'JobsRegister_Services' lentą:
+
+Failo sukūrimas:
+
+SELECT jobsRegisterId, serviceId, goal 
+FROM JobsRegister_Services
+LIMIT 1000
+INTO OUTFILE '/var/lib/mysql-files/serv1000.csv'
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n';
+
+Užloudinimas iš failo:
+
+LOAD DATA INFILE '/var/lib/mysql-files/serv1000.csv'
+INTO TABLE JobsRegister_Services
+COLUMNS TERMINATED BY ','
+OPTIONALLY ENCLOSED BY '"'
+ESCAPED BY '"'
+LINES TERMINATED BY '\n'
+(jobsRegisterId, serviceId, goal);
+
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| Field                 | Type                                | Null | Key | Default | Extra          |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| jobsRegisterServiceId | int(11) unsigned                    | NO   | PRI | NULL    | auto_increment |
+| jobsRegisterId        | int(11) unsigned                    | NO   |     | 0       |                |
+| serviceId             | int(11) unsigned                    | NO   |     | 0       |                |
+| goal                  | enum('primary','secondary','order') | YES  |     | NULL    |                |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+
+Query OK, 1000 rows affected (0,05 sec)
+Records: 1000  Deleted: 0  Skipped: 0  Warnings: 0
+
+ALTER TABLE JobsRegister_Services ADD INDEX indx_jobsRegisterId(jobsRegisterId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_serviceId(serviceId);
+ALTER TABLE JobsRegister_Services ADD INDEX indx_goal(goal);
+
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| Field                 | Type                                | Null | Key | Default | Extra          |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+| jobsRegisterServiceId | int(11) unsigned                    | NO   | PRI | NULL    | auto_increment |
+| jobsRegisterId        | int(11) unsigned                    | NO   | MUL | 0       |                |
+| serviceId             | int(11) unsigned                    | NO   | MUL | 0       |                |
+| goal                  | enum('primary','secondary','order') | YES  | MUL | NULL    |                |
++-----------------------+-------------------------------------+------+-----+---------+----------------+
+
+Query OK, 1000 rows affected (0,07 sec)
+Records: 1000  Deleted: 0  Skipped: 0  Warnings: 0
+
+P.S. Prieš kiekvieną insertų ir deletų operaciją prieš indeksavimą ir po buvo, buvo nudropinama DB ir iš naujo importuojama, kad būtų geresnis performance sugaišto laiko prasme palyginamumas. 
+
+
+
+
+
 
 
 
